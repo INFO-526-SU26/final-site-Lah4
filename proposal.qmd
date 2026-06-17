@@ -57,11 +57,12 @@ Have there been trends with the base stats of Pokemon between the newer and olde
 
 ## Analysis plan
 
-- For the type data I would want to look at the number of Pokemon and types per generation and compare them across the generations in a bar graph. Pokemon with multiple types will be counted in all their relevant types, though a stretch goal could be to split them off from singular type Pokemon into a different category consisting of Pokemon with multiple types. The y axis would be the number of pokemon, the x axis is the typing, and the bar fill is the generation.
-- For the stats I need to look at the base stats and do data wrangling to figure out how to analyze stats across generations. My current idea is get averages of all the stats within a single generation and then compare that average across generations by utilizing line graphs for each stat where the y axis is the numerical value, and the x axis are the different generations, and each stat is represented by a line.
+- For the type data I would want to look at the number of Pokemon and types per generation and compare them across the generations in a bar graph. Pokemon with multiple types will be counted in all their relevant types, though a stretch goal could be to split them off from singular type Pokemon into a different category consisting of Pokemon with multiple types. The y axis would be the number of pokemon, the x axis is the typing, and the bar fill is the generation. From here I would used Facet_Grid to display the different plots, and then compare the data per generation that way.
+- For the stats I need to look at the base stats(HP, Attack, Defense, Special Attack, Speed) and do data wrangling to analyze stats across generations. My current idea is get averages of all the stats within a single generation and then compare that average across generations by utilizing line graphs for each stat where the y axis is the numerical value, and the x axis are the different generations, with each stat represented by a line.
+- Some Pokemon in the dataset have no associated generation ID due to being variants of existing Pokemon. These variants will be cleaned from the dataset as these are not distinct Pokemon. Alongside these some columns will be dropped as they are not needed for this analysis (colors, egg groups, urls).
 
 | Task Name | Status | Due | Priority | Summary |
-|---------------|---------------|---------------|---------------|---------------|
+|----|----|----|----|----|
 | Proposal | Incomplete | June 17th | High | Need to finalize details of the project proposal |
 | Final Deliverables | Incomplete | July 3rd | High | Final project items: Reproducibility, Presentation, Write-up |
 | Stat Graph | Incomplete | June 20th | High | Need to finish all related work to the stat graph. Starting early on this graph as I predict it will take the most work |
