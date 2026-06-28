@@ -177,6 +177,7 @@ regular_pokemon_data_longer <- regular_pokemon |>
 #Some Pokemon only have a single type, which causes NA values to show up when the data is pivoted
   drop_na(types)
 
+#Getting numerical value for every type per generation
 regular_type_count  <- regular_pokemon_data_longer |>
   count(generation, types)
 #-------------------------------------------------------------------------------------------------------#
@@ -203,12 +204,12 @@ regular_type_count |> ggplot(
       )
   ) +
   geom_point(size = 1) +
-  geom_line(size = 0.5, alpha = 0.5) +
+  geom_line(linewidth = 0.5, alpha = 0.5) +
   scale_color_manual(values = type_colors) +
-  scale_x_continuous(breaks = type_count$generation) +
+  scale_x_continuous(breaks = regular_type_count$generation) +
 #Referenced: https://stackoverflow.com/questions/63653351/how-to-use-stat-count-to-label-a-bar-chart-with-counts-or-percentages-in-ggplo
   labs(
-    title = "Total Number of Type Occurrences by Generation",
+    title = "Total Number of Type Occurrences by Generation\nfor non-Legendary/Mythical Pokemon",
     subtitle = "Data up to Pokemon Sun & Moon (2016)",
     caption = "Data source: https://github.com/williamorim/pokemon/",
     x = "Generation",
@@ -225,7 +226,6 @@ regular_type_count |> ggplot(
 
 #-------------------------------------------------------------------------------------------------------#
 
-  
 special_type_count |> ggplot(
   aes(x = generation, 
       y = n,
@@ -234,12 +234,12 @@ special_type_count |> ggplot(
       )
   ) +
   geom_point(size = 1) +
-  geom_line(size = 0.5, alpha = 0.5) +
+  geom_line(linewidth = 0.5, alpha = 0.5) +
   scale_color_manual(values = type_colors) +
-  scale_x_continuous(breaks = type_count$generation) +
+  scale_x_continuous(breaks = special_type_count$generation) +
 #Referenced: https://stackoverflow.com/questions/63653351/how-to-use-stat-count-to-label-a-bar-chart-with-counts-or-percentages-in-ggplo
   labs(
-    title = "Total Number of Type Occurrences by Generation",
+    title = "Total Number of Type Occurrences by Generation\nfor Legendary/Mythical Pokemon",
     subtitle = "Data up to Pokemon Sun & Moon (2016)",
     caption = "Data source: https://github.com/williamorim/pokemon/",
     x = "Generation",
@@ -267,21 +267,25 @@ generation_averages <- pokemon_data |>
   summarise(avg_tot_stats = mean(total_stats),
             avg_height = mean(height),
             avg_weight = mean(weight)
-            )
-
-physical_averages <- generation_averages |>
-  select(generation, avg_weight, avg_height) |>
+            ) |>
   pivot_longer(
     cols = starts_with("avg_"),
-    values_to = "avg_phys_stats"
+    values_to = "averages"
+  ) |>
+  mutate(
+    name = recode(factor(name),
+      "avg_tot_stats" = "Total Stats",
+      "avg_height" = "Height (M)",
+      "avg_weight" = "Weight (Kg)"
+      )
   )
 
 #-------------------------------------------------------------------------------------------------------#
 
-stat_graph <- generation_averages |> ggplot(
+generation_averages |> ggplot(
   aes(
     x = generation,
-    y = avg_tot_stats,
+    y = averages,
     )
   ) +
   geom_point(size = 1, alpha = 0.75) +
@@ -289,7 +293,7 @@ stat_graph <- generation_averages |> ggplot(
   geom_smooth(method = "lm", se = FALSE) +
   scale_x_continuous(breaks = generation_averages$generation) +
     labs(
-    title = "Average Stat Values",
+    title = "Average Values by Generation",
     subtitle = "Data up to Pokemon Sun & Moon (2016)",
     caption = "Data source: https://github.com/williamorim/pokemon/",
     x = "Generation",
@@ -297,34 +301,16 @@ stat_graph <- generation_averages |> ggplot(
   ) +
   theme(
     legend.text = element_text(size = 9),
-    legend.title = element_text(size = 10)
+    legend.title = element_text(size = 10),
+  ) +
+  #Referenced: https://ggplot2.tidyverse.org/reference/facet_wrap.html
+  facet_wrap(
+    ~ fct_inorder(name),
+    labeller = labeller(name = new_labels),
+    scales = "free_y",
+    nrow = 3
   )
 
 #-------------------------------------------------------------------------------------------------------#
-
-physical_graph <- physical_averages |> ggplot(
-  aes(
-    x = generation,
-    y = avg_phys_stats,
-    color = name
-    )
-  ) +
-  geom_point(size = 1, alpha = 0.75) +
-  geom_line() +
-  geom_smooth(method = "lm", se = FALSE) +
-  scale_x_continuous(breaks = physical_averages$generation) +
-    labs(
-    title = "Average Stat Values",
-    subtitle = "Data up to Pokemon Sun & Moon (2016)",
-    caption = "Data source: https://github.com/williamorim/pokemon/",
-    x = "Generation",
-    y = "Average Value"
-  ) +
-  theme(
-    legend.text = element_text(size = 9),
-    legend.title = element_text(size = 10)
-  )
-
-stat_graph/physical_graph
 
 ```

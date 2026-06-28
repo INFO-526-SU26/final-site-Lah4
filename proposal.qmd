@@ -65,7 +65,7 @@ Have there been trends with the total stats, heights, and weights of Pokemon bet
 |---------------|---------------|---------------|---------------|---------------|
 | Proposal | Complete | June 17th | High | Need to finalize details of the project proposal |
 | Final Deliverables | Incomplete | July 3rd | High | Final project items: Reproducibility, Presentation, Write-up |
-| Stat Graph | Incomplete | June 20th | High | All related work to Stat graph |
+| Stat Graph | Complete | June 20th | High | All related work to Stat graph |
 | Type Graph | Complete | June 24th | High | All related work to Type graph |
 | Reproducibility | Incomplete | June 26th | Low |  |
 | Presentation | Incomplete | June 28th | Medium |  |
