@@ -51,22 +51,22 @@ I chose this dataset because I'm interested in Pokemon, and as a series that has
 
 ## Questions
 
-What is the type distributions between generations and does this show any trends that maybe indicate certain types becoming more or less popular?\
+What are the type distributions between generations for regular, and Legendary/ Mythical Pokemon and does this show any trends that maybe indicate certain types becoming more or less popular\
 \
-Have there been trends with the base stats of Pokemon between the newer and older generations such as rising base stats or falling base stats?
+Have there been trends with the total stats, heights, and weights of Pokemon between the newer and older generations such as rising or falling averages between generations?
 
 ## Analysis plan
 
-- For the type data I would want to look at the number of Pokemon and types per generation and compare them across the generations in a bar graph. Pokemon with multiple types will be counted in all their relevant types, though a stretch goal could be to split them off from singular type Pokemon into a different category consisting of Pokemon with multiple types. The y axis would be the number of pokemon, the x axis is the typing, and the bar fill is the generation. From here I would used Facet_Grid to display the different plots, and then compare the data per generation that way.
-- For the stats I need to look at the base stats(HP, Attack, Defense, Special Attack, Speed) and do data wrangling to analyze stats across generations. My current idea is get averages of all the stats within a single generation and then compare that average across generations by utilizing line graphs for each stat where the y axis is the numerical value, and the x axis are the different generations, with each stat represented by a line.
-- Some Pokemon in the dataset have no associated generation ID due to being variants of existing Pokemon. These variants will be cleaned from the dataset as these are not distinct Pokemon. Alongside these some columns will be dropped as they are not needed for this analysis (colors, egg groups, urls).
+- For the type data I would want to look at the number of Pokemon and types per generation and compare them across the generations in a connected line plot. Pokemon with multiple types will have both counted. The y axis would be the number of Pokemon, the x axis is the generation, with all the different types having unique colors. I also need to use different data frames for regular and special Pokemon by filtering for Legendary/Mythical status.
+- For the stats I need to look at the base stats(HP, Attack, Defense, Special Attack, Speed) and do data wrangling to analyze stats across generations. To do this, I need to create a new variable, total_stats, which is the summation of all the stats for one Pokemon. With this new variable, I can then get the average total stats per generation and then compare that average across generations by utilizing line graph where the y axis is the numerical value, and the x axis are the different generations, with each stat represented by a line. A similar process can then also be implemented for the heights and weights of Pokemon.
+- Some Pokemon in the dataset have no associated generation ID due to being variants of existing Pokemon. These variants will be cleaned from the dataset as these are not distinct Pokemon. Alongside these some columns will be dropped as they are not needed for this analysis (colors, egg groups, urls). A data frame of Legendary and Mythical Pokemon will also need to be extracted from the original data to help answer question 1, alongside a summation of HP, Attack, Defense, Special Attack, and Speed.
 
 | Task Name | Status | Due | Priority | Summary |
-|----|----|----|----|----|
-| Proposal | Incomplete | June 17th | High | Need to finalize details of the project proposal |
+|---------------|---------------|---------------|---------------|---------------|
+| Proposal | Complete | June 17th | High | Need to finalize details of the project proposal |
 | Final Deliverables | Incomplete | July 3rd | High | Final project items: Reproducibility, Presentation, Write-up |
-| Stat Graph | Incomplete | June 20th | High | Need to finish all related work to the stat graph. Starting early on this graph as I predict it will take the most work |
-| Type Graph | Incomplete | June 24th | High | All related work to Type Graph |
+| Stat Graph | Incomplete | June 20th | High | All related work to Stat graph |
+| Type Graph | Complete | June 24th | High | All related work to Type graph |
 | Reproducibility | Incomplete | June 26th | Low |  |
 | Presentation | Incomplete | June 28th | Medium |  |
 | Write-Up | Incomplete | June 30th | Medium |  |
