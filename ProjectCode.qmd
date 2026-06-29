@@ -305,7 +305,6 @@ generation_averages |> ggplot(
   #Referenced: https://ggplot2.tidyverse.org/reference/facet_wrap.html
   facet_wrap(
     ~ fct_inorder(name),
-    labeller = labeller(name = new_labels),
     scales = "free_y",
     nrow = 3
   )
