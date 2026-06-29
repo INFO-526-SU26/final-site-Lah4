@@ -25,9 +25,8 @@ if (!require("pacman"))
 # use this line for installing/loading
 pacman::p_load(tidyverse,
                ggthemes,
-               tidytext,
                patchwork,
-               pokemon,)
+               pokemon)
 
 # set theme for ggplot2
 ggplot2::theme_set(ggplot2::theme_grey(base_size = 12))
@@ -47,7 +46,7 @@ knitr::opts_chunk$set(
 
 ## 0 - Pre Process
 
-```{r, cache = TRUE}
+```{r cache=TRUE}
 #| label: Pre Process
 
 pokemon_data <- pokemon
