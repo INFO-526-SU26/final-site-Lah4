@@ -1,28 +1,30 @@
----
-title: "Proposal title"
-subtitle: "Proposal"
-author:
-  - name: Luis Hernandez
-    affiliations:
-      - name: "School of Information, University of Arizona"
-description: "Project description"
-format:
-  html:
-    code-tools: true
-    code-overflow: wrap
-    code-line-numbers: true
-    embed-resources: true
-editor: visual
-code-annotations: hover
-execute:
-  warning: false
----
+|                                    |
+|------------------------------------|
+| title: "Proposal title"            |
+| subtitle: "Proposal"               |
+| author:                            |
+| \- name:                           |
+| affiliations:                      |
+| \- name:                           |
+| description: "Project description" |
+| format:                            |
+| html:                              |
+| code-tools: true                   |
+| code-overflow: wrap                |
+| code-line-numbers: true            |
+| embed-resources: true              |
+| editor: visual                     |
+| code-annotations: hover            |
+| execute:                           |
+| warning: false                     |
 
 ```{r}
-if (!require("pacman")) install.packages("pacman")
-if (!require("tidyverse")) install.packages("tidyverse")
-if (!require("pokemon")) install.packages("pokemon")
+if (!require("pacman")) 
+  install.packages("pacman")
 
+# use this line for installing/loading
+pacman::p_load(tidyverse,
+               pokemon)
 ```
 
 ## Dataset
@@ -45,7 +47,7 @@ The Pokemon dataset contains 22 columns of data and 949 rows containing data of 
 
 The columns contain information regarding several different statistics of Pokemon. This includes: Name, Species ID, Height, Weight, Base EXP, Type Info, HP, Attack, Defense, Special Attack, Speed, Colors, Egg Groups, and Generation ID.
 
-I chose this dataset because I'm interested in Pokemon, and as a series that has existed since the 90's there is plenty of data to sift through that may reveal trends across different generations.
+I chose this data set because I'm interested in Pokemon, and as a series that has existed since the 90's there is plenty of data to sift through that may reveal trends across different generations.
 
 ## Questions
 
