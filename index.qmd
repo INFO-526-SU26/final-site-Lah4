@@ -1,11 +1,11 @@
 ---
-title: "Project Title"
+title: "Trends Across Pokemon Generations"
 subtitle: "INFO 526 - Summer 2024 - Final Project"
 author: 
-  - name: "Team name"
+  - name: "Luis Hernandez"
     affiliations:
       - name: "School of Information, University of Arizona"
-description: "Project description"
+description: "This project attempts to analyze the trends of certain characteristics of Pokemon across generations 1 through 7"
 format:
    html:
     code-tools: true
@@ -17,6 +17,297 @@ execute:
   echo: false
 ---
 
-## Abstract
+## Introduction
 
-Add project abstract here.
+The dataset used for this project is the following dataset: https://github.com/williamorim/pokemon/
+
+This Pokemon dataset contains 22 columns of data and 949 rows containing data of Pokemon up to the 7th generation Pokemon games. The 7th generation of Pokemon includes Pokemon Sun & Moon, Pokemon Ultra Sun & Moon, and Pokemon Let's Go Pikachu & Let's Go Eevee. This dataset in particular only contains the statistics of Pokemon up to the games Pokemon Sun & Moon, so none of the new Pokemon introduced in Ultra Sun & Moon are present. The data set contains information regarding several different statistics of Pokemon. This includes: Name, Species ID, Height, Weight, Base EXP, Type Info, HP, Attack, Defense, Special Attack, Speed, Colors, Egg Groups, and Generation ID.
+
+Using this dataset, we will attempt to answer the following questions.
+
+## Question 1: Type Counts Across Generations
+
+**Introduction:**
+
+An important characteristic of Pokemon is their typing. Pokemon types are properties applied to Pokemon that determine a variety of characteristics for Pokemon, such as moves they can use most effectively or what moves they're weak against. The question I'd like to answer regarding Pokemon types is: How are types distributed for non Legendary/Mythical Pokemon and Legendary/Mythical Pokemon for Pokemon generations 1 - 7?
+
+To answer this question I need two separate data frames with one having non Legendary/Mythical Pokemon and the other having only Legendary/Mythical Pokemon. For both data frames, I then need a count of the occurrance of every Pokemon type per generation. I'm interested in this question as I feel that it would be interesting to see if certain types have risen or fallen in popularity, or if the developers of Pokemon, Game Freak, have a bias towards certain types.
+
+**Approach:**
+
+In order to answer this question, I will be using a bar chart to get a summation of types of the whole dataset, and connected line plots for non-Legendary/Mythical Pokemon and Legendary/Mythical Pokemon types across generations. The bar chart will allow us to easily see and compare how many times a particular type is counted in the whole data set. This will show how common or uncommon certain types are across the whole dataset. The connected line plot will serve a similar purpose, but it will allow us to compare by generation by setting the x axis as the generation, and the y axis as the number of times a type was counted in that generation.
+
+**Analysis:**
+
+## 0 - Pre Process and Setup
+
+```{r setup cache=TRUE}
+#| label: Pre Process
+
+if (!require("pacman")) 
+  install.packages("pacman")
+
+# use this line for installing/loading
+pacman::p_load(tidyverse,
+               ggthemes,
+               patchwork,
+               ggiraph,
+               pokemon)
+
+# set theme for ggplot2
+ggplot2::theme_set(ggplot2::theme_grey(base_size = 12))
+
+# set figure parameters for knitr
+knitr::opts_chunk$set(
+  fig.width = 7, # 7" width
+  fig.asp = 0.618, # the golden ratio
+  fig.retina = 3, # dpi multiplier for displaying HTML output on retina
+  fig.align = "center", # center align figures
+  dpi = 300 # higher dpi, sharper image
+)
+
+pokemon_data <- pokemon
+
+pokemon_data <- pokemon_data |>
+  rename(generation = generation_id)
+
+#Trimming specific columns that will not be needed for the analysis
+pokemon_data$id <- NULL
+pokemon_data$species_id <- NULL
+pokemon_data$base_experience <- NULL
+
+pokemon_data$egg_group_1 <- NULL
+pokemon_data$egg_group_2 <- NULL
+
+pokemon_data$color_1 <- NULL
+pokemon_data$color_2 <- NULL
+pokemon_data$color_f <- NULL
+
+pokemon_data$url_icon <- NULL
+pokemon_data$url_image <- NULL
+
+#Removing Pokemon without a generation ID
+#Referenced https://tidyr.tidyverse.org/reference/drop_na.html
+
+pokemon_data <- pokemon_data |>
+  drop_na(generation)
+
+#Referenced: https://infopoke.net/pokedex/legendary
+#Data does not include indicator for legendary/mythical status. 
+#This means I need to manually sort which Pokemon are legendary/mythical
+pokemon_data <- pokemon_data |>
+  mutate(
+    legend_stat = case_when(
+      row_number() %in% 
+        c(144, 145, 146, 150, 151, 243, 
+          244, 245, 249, 250, 251, 377, 
+          378, 379, 380, 381, 382, 383, 
+          384, 385, 386, 480, 481, 482, 
+          483, 484, 485, 486, 487, 488, 
+          489, 490, 491, 492, 493, 494, 
+          638, 639, 640, 641, 642, 643, 
+          644, 645, 646, 647, 648, 649, 
+          716, 717, 718, 719, 720, 721, 
+          785, 786, 787, 788, 791, 792, 
+          800, 801, 802 ) ~ TRUE,
+          TRUE  ~ FALSE
+    ),
+    
+    total_stats = rowSums(across(c(hp, attack, defense, special_attack, special_defense, speed)))
+    
+  )
+
+special_pokemon <- pokemon_data |>
+  filter(legend_stat == TRUE)
+
+regular_pokemon <- pokemon_data |>
+  filter(legend_stat == FALSE)
+
+type_colors <-  
+  c(
+    "normal" = "gray50",
+    "fighting" = "darkorange",
+    "flying" = "lightskyblue3",
+    "poison" = "mediumpurple",
+    "ground" = "sienna",
+    "rock" = "tan",
+    "bug" = "darkolivegreen3",
+    "ghost" = "purple4",
+    "steel" = "slategray",
+    "fire" = "red3",
+    "water" = "dodgerblue3",
+    "grass" = "seagreen4",
+    "electric" = "goldenrod",
+    "psychic" = "deeppink3",
+    "ice" = "cyan3",
+    "dragon" = "steelblue3",
+    "dark" = "grey30",
+    "fairy" = "plum3"
+  )
+
+
+```
+
+## 1 - Type Count Bar Chart
+
+```{r}
+#| label: Type Code
+
+#Need to account for secondary typing of Pokemon, so we're pivoting both type columns into one
+pokemon_data_longer <- pokemon_data |>
+  pivot_longer(
+    cols = starts_with("type_"),
+    values_to = "types"
+  ) |>
+#Some Pokemon only have a single type, which causes NA values to show up when the data is pivoted
+  drop_na(types)
+
+pokemon_data_longer |> ggplot(aes(y =  fct_rev(fct_infreq(types)), fill = types)) +
+  geom_bar() +
+#Referenced: https://stackoverflow.com/questions/63653351/how-to-use-stat-count-to-label-a-bar-chart-with-counts-or-percentages-in-ggplo
+  scale_fill_manual(values = type_colors) +
+  geom_text(
+    aes(label = after_stat(count)),
+    stat = "count", hjust = 1.1, size = 3,
+    color = "white"
+  ) +
+  labs(
+    title = "Total Number of Pokemon Type Occurrences",
+    subtitle = "Data up to Pokemon Sun & Moon (2016)",
+    caption = "Data source: https://github.com/williamorim/pokemon/",
+    x = "Type Count",
+    y = "Type"
+  ) +
+  theme(
+    legend.position = "none",
+  )
+```
+
+## 2 - Type Count Per Generation
+
+```{r}
+#| label: Type Code 2
+
+#Need to account for secondary typing of Pokemon, so we're pivoting both type columns into one
+regular_pokemon_data_longer <- regular_pokemon |>
+  pivot_longer(
+    cols = starts_with("type_"),
+    values_to = "types"
+  ) |>
+#Some Pokemon only have a single type, which causes NA values to show up when the data is pivoted
+  drop_na(types)
+
+#Getting numerical value for every type per generation
+regular_type_count  <- regular_pokemon_data_longer |>
+  count(generation, types)
+#-------------------------------------------------------------------------------------------------------#
+#Legendary/Mythical Pokemon
+
+special_pokemon_data_longer <- special_pokemon |>
+  pivot_longer(
+    cols = starts_with("type_"),
+    values_to = "types"
+  ) |>
+  drop_na(types)
+
+special_type_count  <- special_pokemon_data_longer |>
+  count(generation, types)
+
+
+#-------------------------------------------------------------------------------------------------------#
+#Referenced: https://r-graph-gallery.com/412-customize-css-in-interactive-ggiraph.html
+#Referenced: https://ardata.fr/ggiraph-book/
+#Used to make the line graph interactive
+
+plot1 <- regular_type_count |> ggplot(
+  aes(x = generation, 
+      y = n,
+      color = types,
+      group = types,
+      tooltip = types,
+      data_id = types,
+      )
+  ) +
+  geom_point_interactive(size = 1) +
+  geom_line_interactive(linewidth = 0.5, alpha = 0.5) +
+  scale_color_manual_interactive(
+    values = type_colors) +
+  scale_x_continuous(breaks = regular_type_count$generation) +
+  labs(
+    title = "Total Number of Type Occurrences by Generation\nfor non-Legendary/Mythical Pokemon",
+    subtitle = "Data up to Pokemon Sun & Moon (2016)",
+    caption = "Data source: https://github.com/williamorim/pokemon/",
+    x = "Generation",
+    y = "Type Count"
+  ) +
+  theme(
+    legend.position = "right",
+    legend.text = element_text(size = 9),
+    legend.title = element_text(size = 10),
+  ) + 
+  guides(
+     color = guide_legend(override.aes = list(size = 1), ncol = 2) 
+  )
+
+#-------------------------------------------------------------------------------------------------------#
+
+plot2 <- special_type_count |> ggplot(
+  aes(x = generation, 
+      y = n,
+      color = types,
+      group = types,
+      tooltip = types,
+      data_id = types,
+      )
+  ) +
+  geom_point_interactive(size = 1) +
+  geom_line_interactive(linewidth = 0.5, alpha = 0.75) +
+  scale_color_manual_interactive(
+    values = type_colors) +
+  scale_x_continuous(breaks = special_type_count$generation) +
+  labs(
+    title = "Total Number of Type Occurrences by Generation\nfor Legendary/Mythical Pokemon",
+    subtitle = "Data up to Pokemon Sun & Moon (2016)",
+    caption = "Data source: https://github.com/williamorim/pokemon/",
+    x = "Generation",
+    y = "Type Count"
+  ) +
+  theme(
+    legend.position = "right",
+    legend.text = element_text(size = 9),
+    legend.title = element_text(size = 10),
+  ) + 
+  guides(
+     color = guide_legend(override.aes = list(size = 1), ncol = 2) 
+  )
+
+#-------------------------------------------------------------------------------------------------------#
+
+#This allows the graph to highlight the lines when hovered over along with hiding lines when clicking on the legend
+interactive_type_plot1 <- girafe(ggobj = plot1)
+interactive_type_plot2 <- girafe(ggobj = plot2)
+
+interactive_type_plot1 <- girafe_options(
+  interactive_type_plot1,
+  opts_hover(css = "stroke-width: 3px; transition: all 0.3s ease;pointer-events: visibleStroke;"),
+  opts_hover_key(css = "stroke-width: 3px; transition: all 0.3s ease;"),
+  opts_hover_inv("opacity:0.15;filter:saturate(10%);"),
+  opts_toolbar(saveaspng = FALSE)
+)
+
+interactive_type_plot2 <- girafe_options(
+  interactive_type_plot2,
+  opts_hover(css = "stroke-width: 3px; transition: all 0.3s ease;pointer-events: visibleStroke;"),
+  opts_hover_key(css = "stroke-width: 3px; transition: all 0.3s ease;"),
+  opts_hover_inv("opacity:0.15;filter:saturate(10%);"),
+  opts_toolbar(saveaspng = FALSE)
+)
+
+
+interactive_type_plot1
+interactive_type_plot2
+```
+
+**Analysis:**
+
+##Question 2: Statistical and Physical Averages Across Generations

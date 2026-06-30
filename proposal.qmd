@@ -1,22 +1,21 @@
-|                                    |
-|------------------------------------|
-| title: "Proposal title"            |
-| subtitle: "Proposal"               |
-| author:                            |
-| \- name:                           |
-| affiliations:                      |
-| \- name:                           |
-| description: "Project description" |
-| format:                            |
-| html:                              |
-| code-tools: true                   |
-| code-overflow: wrap                |
-| code-line-numbers: true            |
-| embed-resources: true              |
-| editor: visual                     |
-| code-annotations: hover            |
-| execute:                           |
-| warning: false                     |
+---
+title: "Final Project Proposal"
+subtitle: "INFO 526 - Summer 2024 - Final Project"
+author: 
+  - name: "Luis Hernandez"
+    affiliations:
+      - name: "School of Information, University of Arizona"
+description: "This project attempts to analyze the trends of certain characteristics of Pokemon across generations 1 through 7"
+format:
+   html:
+    code-tools: true
+    code-overflow: wrap
+    embed-resources: true
+editor: visual
+execute:
+  warning: false
+  echo: false
+---
 
 ```{r}
 if (!require("pacman")) 
@@ -69,6 +68,6 @@ Have there been trends with the total stats, heights, and weights of Pokemon bet
 | Type Graph | Complete | June 24th | High | All related work to Type graph |
 | Reproducibility | Incomplete | June 26th | Low |  |
 | Presentation | Incomplete | June 28th | Medium |  |
-| Write-Up | Incomplete | June 30th | Medium |  |
+| Write-Up | In Progress | June 30th | Medium |  |
 
 : Weekly Project Plan, Due dates are rough estimates of when task should be done.
