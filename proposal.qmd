@@ -24,21 +24,10 @@ if (!require("pacman"))
 # use this line for installing/loading
 pacman::p_load(tidyverse,
                pokemon)
+pokemon_data <- pokemon
 ```
 
 ## Dataset
-
-```{r}
-#| label: load-dataset
-#| message: false
-
-glimpse(pokemon)
-
-```
-
-A brief description of your dataset including its provenance, dimensions, etc. as well as the reason why you chose this dataset.
-
-Make sure to load the data and use inline code for some of this information.
 
 <https://github.com/williamorim/pokemon/>
 
@@ -46,17 +35,31 @@ The Pokemon dataset contains 22 columns of data and 949 rows containing data of 
 
 The columns contain information regarding several different statistics of Pokemon. This includes: Name, Species ID, Height, Weight, Base EXP, Type Info, HP, Attack, Defense, Special Attack, Speed, Colors, Egg Groups, and Generation ID.
 
+For example, the Pokemon, Bulbasaur, has the following data:
+
+Type 1:
+`r pokemon_data$type_1[1]`
+
+Type 2:
+`r pokemon_data$type_2[1]`
+
+Attack:
+`r pokemon_data$attack[1]`
+
+Defense:
+`r pokemon_data$defense[1]`
+
 I chose this data set because I'm interested in Pokemon, and as a series that has existed since the 90's there is plenty of data to sift through that may reveal trends across different generations.
 
 ## Questions
 
-What are the type distributions between generations for regular, and Legendary/ Mythical Pokemon and does this show any trends that maybe indicate certain types becoming more or less popular\
-\
+What are the type distributions between generations for regular, and Legendary/ Mythical Pokemon and does this show any trends that maybe indicate certain types becoming more or less popular
+
 Have there been trends with the total stats, heights, and weights of Pokemon between the newer and older generations such as rising or falling averages between generations?
 
 ## Analysis plan
 
-- For the type data I would want to look at the number of Pokemon and types per generation and compare them across the generations in a connected line plot. Pokemon with multiple types will have both counted. The y axis would be the number of Pokemon, the x axis is the generation, with all the different types having unique colors. I also need to use different data frames for regular and special Pokemon by filtering for Legendary/Mythical status.
+- For the type data I would want to look at the number of Pokemon and types per generation and compare them across the generations in a connected line plot. Pokemon with multiple types will have both counted. The y axis would be the count of types, the x axis is the generation, with all the different types having unique colors. I also need to use different data frames for regular and special Pokemon by filtering for Legendary/Mythical status.
 - For the stats I need to look at the base stats(HP, Attack, Defense, Special Attack, Speed) and do data wrangling to analyze stats across generations. To do this, I need to create a new variable, total_stats, which is the summation of all the stats for one Pokemon. With this new variable, I can then get the average total stats per generation and then compare that average across generations by utilizing line graph where the y axis is the numerical value, and the x axis are the different generations, with each stat represented by a line. A similar process can then also be implemented for the heights and weights of Pokemon.
 - Some Pokemon in the dataset have no associated generation ID due to being variants of existing Pokemon. These variants will be cleaned from the dataset as these are not distinct Pokemon. Alongside these some columns will be dropped as they are not needed for this analysis (colors, egg groups, urls). A data frame of Legendary and Mythical Pokemon will also need to be extracted from the original data to help answer question 1, alongside a summation of HP, Attack, Defense, Special Attack, and Speed.
 

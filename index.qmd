@@ -31,17 +31,19 @@ Using this dataset, we will attempt to answer the following questions.
 
 An important characteristic of Pokemon is their typing. Pokemon types are properties applied to Pokemon that determine a variety of characteristics for Pokemon, such as moves they can use most effectively or what moves they're weak against. The question I'd like to answer regarding Pokemon types is: How are types distributed for non Legendary/Mythical Pokemon and Legendary/Mythical Pokemon for Pokemon generations 1 - 7?
 
-To answer this question I need two separate data frames with one having non Legendary/Mythical Pokemon and the other having only Legendary/Mythical Pokemon. For both data frames, I then need a count of the occurrance of every Pokemon type per generation. I'm interested in this question as I feel that it would be interesting to see if certain types have risen or fallen in popularity, or if the developers of Pokemon, Game Freak, have a bias towards certain types.
+To answer this question I need two separate data frames with one having non Legendary/Mythical Pokemon and the other having only Legendary/Mythical Pokemon. For both data frames, I then need a count of the occurrence of every Pokemon type per generation. I'm interested in this question as I feel that it would be interesting to see if certain types have risen or fallen in popularity, or if the developers of Pokemon, Game Freak, have a bias towards certain types.
 
 **Approach:**
 
-In order to answer this question, I will be using a bar chart to get a summation of types of the whole dataset, and connected line plots for non-Legendary/Mythical Pokemon and Legendary/Mythical Pokemon types across generations. The bar chart will allow us to easily see and compare how many times a particular type is counted in the whole data set. This will show how common or uncommon certain types are across the whole dataset. The connected line plot will serve a similar purpose, but it will allow us to compare by generation by setting the x axis as the generation, and the y axis as the number of times a type was counted in that generation.
+In order to answer this question, I will be using a bar chart to get a summation of types of the whole dataset, and connected line plots to count the non-Legendary/Mythical Pokemon and Legendary/Mythical Pokemon types across generations. The bar chart will allow us to easily see and compare how many times a particular type is counted in the whole data set. This will show how common or uncommon certain types are across the whole dataset. The connected line plot will serve a similar purpose, but it will allow us to compare by generation by setting the x axis as the generation, and the y axis as the number of times a type was counted in that generation.
 
 **Analysis:**
 
 ## 0 - Pre Process and Setup
 
-```{r setup cache=TRUE}
+This code chunk shows the initial data processing, cleaning, and page setup. The results from this code chunk are used in both questions 1 and 2.
+
+```{r setup cache: TRUE echo = TRUE}
 #| label: Pre Process
 
 if (!require("pacman")) 
@@ -113,6 +115,7 @@ pokemon_data <- pokemon_data |>
           TRUE  ~ FALSE
     ),
     
+    #getting a summation of the stats. This will be used in the 2nd question
     total_stats = rowSums(across(c(hp, attack, defense, special_attack, special_defense, speed)))
     
   )
@@ -150,7 +153,7 @@ type_colors <-
 
 ## 1 - Type Count Bar Chart
 
-```{r}
+```{r, echo = TRUE}
 #| label: Type Code
 
 #Need to account for secondary typing of Pokemon, so we're pivoting both type columns into one
@@ -172,7 +175,7 @@ pokemon_data_longer |> ggplot(aes(y =  fct_rev(fct_infreq(types)), fill = types)
     color = "white"
   ) +
   labs(
-    title = "Total Number of Pokemon Type Occurrences",
+    title = "Count of Pokemon Type Occurrences",
     subtitle = "Data up to Pokemon Sun & Moon (2016)",
     caption = "Data source: https://github.com/williamorim/pokemon/",
     x = "Type Count",
@@ -185,7 +188,7 @@ pokemon_data_longer |> ggplot(aes(y =  fct_rev(fct_infreq(types)), fill = types)
 
 ## 2 - Type Count Per Generation
 
-```{r}
+```{r, echo = TRUE}
 #| label: Type Code 2
 
 #Need to account for secondary typing of Pokemon, so we're pivoting both type columns into one
@@ -199,39 +202,62 @@ regular_pokemon_data_longer <- regular_pokemon |>
 
 #Getting numerical value for every type per generation
 regular_type_count  <- regular_pokemon_data_longer |>
-  count(generation, types)
+  count(generation, types) |>
+  rename("count" = "n")
+
+regular_type_count <- regular_type_count |>
+  arrange(types, generation) |>
+  group_by(types) |>
+  mutate(
+    generation_end = lead(generation),
+    count_end = lead(count)
+  ) |>
+  ungroup()
+
 #-------------------------------------------------------------------------------------------------------#
 #Legendary/Mythical Pokemon
 
 special_pokemon_data_longer <- special_pokemon |>
   pivot_longer(
     cols = starts_with("type_"),
-    values_to = "types"
+    values_to = "types",
   ) |>
   drop_na(types)
 
 special_type_count  <- special_pokemon_data_longer |>
-  count(generation, types)
+  count(generation, types) |>
+  rename("count" = "n")
+
+special_type_count <- special_type_count |>
+  arrange(types, generation) |>
+  group_by(types) |>
+  mutate(
+    generation_end = lead(generation),
+    count_end = lead(count)
+  ) |>
+  ungroup()
 
 
 #-------------------------------------------------------------------------------------------------------#
 #Referenced: https://r-graph-gallery.com/412-customize-css-in-interactive-ggiraph.html
 #Referenced: https://ardata.fr/ggiraph-book/
+#Referenced: https://github.com/davidgohel/ggiraph/issues/298
 #Used to make the line graph interactive
 
 plot1 <- regular_type_count |> ggplot(
   aes(x = generation, 
-      y = n,
+      y = count,
+      xend = generation_end,
+      yend = count_end,
       color = types,
       group = types,
       tooltip = types,
       data_id = types,
       )
   ) +
-  geom_point_interactive(size = 1) +
-  geom_line_interactive(linewidth = 0.5, alpha = 0.5) +
-  scale_color_manual_interactive(
-    values = type_colors) +
+  geom_point_interactive(size = 1.5) +
+  geom_segment_interactive(linewidth = 0.7, alpha = 0.5) +
+  scale_color_manual(values = type_colors) +
   scale_x_continuous(breaks = regular_type_count$generation) +
   labs(
     title = "Total Number of Type Occurrences by Generation\nfor non-Legendary/Mythical Pokemon",
@@ -253,15 +279,17 @@ plot1 <- regular_type_count |> ggplot(
 
 plot2 <- special_type_count |> ggplot(
   aes(x = generation, 
-      y = n,
+      y = count,
       color = types,
+      xend = generation_end,
+      yend = count_end,
       group = types,
       tooltip = types,
       data_id = types,
       )
   ) +
-  geom_point_interactive(size = 1) +
-  geom_line_interactive(linewidth = 0.5, alpha = 0.75) +
+  geom_point_interactive(size = 1.5) +
+  geom_segment_interactive(linewidth = 0.7, alpha = 0.75) +
   scale_color_manual_interactive(
     values = type_colors) +
   scale_x_continuous(breaks = special_type_count$generation) +
@@ -289,7 +317,7 @@ interactive_type_plot2 <- girafe(ggobj = plot2)
 
 interactive_type_plot1 <- girafe_options(
   interactive_type_plot1,
-  opts_hover(css = "stroke-width: 3px; transition: all 0.3s ease;pointer-events: visibleStroke;"),
+  opts_hover(css = "stroke-width: 3px; transition: all 0.3s ease"),
   opts_hover_key(css = "stroke-width: 3px; transition: all 0.3s ease;"),
   opts_hover_inv("opacity:0.15;filter:saturate(10%);"),
   opts_toolbar(saveaspng = FALSE)
@@ -297,7 +325,7 @@ interactive_type_plot1 <- girafe_options(
 
 interactive_type_plot2 <- girafe_options(
   interactive_type_plot2,
-  opts_hover(css = "stroke-width: 3px; transition: all 0.3s ease;pointer-events: visibleStroke;"),
+  opts_hover(css = "stroke-width: 3px; transition: all 0.3s ease"),
   opts_hover_key(css = "stroke-width: 3px; transition: all 0.3s ease;"),
   opts_hover_inv("opacity:0.15;filter:saturate(10%);"),
   opts_toolbar(saveaspng = FALSE)
@@ -308,6 +336,10 @@ interactive_type_plot1
 interactive_type_plot2
 ```
 
+For better viewing, expand the line chart. Hovering over either a lines or point highlights that specific line, and dims the other lines.
+
 **Analysis:**
+
+From the bar chart
 
 ##Question 2: Statistical and Physical Averages Across Generations
