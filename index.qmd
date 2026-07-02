@@ -17,27 +17,27 @@ execute:
   echo: false
 ---
 
-## Introduction
+# Introduction
 
 The dataset used for this project is the following dataset: https://github.com/williamorim/pokemon/
 
-This Pokemon dataset contains 22 columns of data and 949 rows containing data of Pokemon up to the 7th generation Pokemon games. The 7th generation of Pokemon includes Pokemon Sun & Moon, Pokemon Ultra Sun & Moon, and Pokemon Let's Go Pikachu & Let's Go Eevee. This dataset in particular only contains the statistics of Pokemon up to the games Pokemon Sun & Moon, so none of the new Pokemon introduced in Ultra Sun & Moon are present. The data set contains information regarding several different statistics of Pokemon. This includes: Name, Species ID, Height, Weight, Base EXP, Type Info, HP, Attack, Defense, Special Attack, Speed, Colors, Egg Groups, and Generation ID.
+This Pokemon dataset contains 22 columns of data and 949 rows containing data of Pokemon up to the 7th generation Pokemon games. The 7th generation of Pokemon includes Pokemon Sun & Moon, Pokemon Ultra Sun & Moon, and Pokemon Let's Go Pikachu & Let's Go Eevee. This dataset in particular only contains the statistics of Pokemon up to the games Pokemon Sun & Moon, so none of the new Pokemon introduced in Ultra Sun & Moon are present. The data set contains information regarding several different statistics of Pokemon. This includes: Name, Species ID, Height, Weight, Base EXP, Type Info, HP, Attack, Defense, Special Attack, Speed, Colors, Egg Groups, and Generation ID as columns and each row being a unique Pokemon.
 
 Using this dataset, we will attempt to answer the following questions.
 
-## Question 1: Type Counts Across Generations
+# Question 1: Type Counts Across Generations
 
-**Introduction:**
+## **Introduction**:
 
 An important characteristic of Pokemon is their typing. Pokemon types are properties applied to Pokemon that determine a variety of characteristics for Pokemon, such as moves they can use most effectively or what moves they're weak against. The question I'd like to answer regarding Pokemon types is: How are the 18 types distributed for non Legendary/Mythical Pokemon and Legendary/Mythical Pokemon for Pokemon generations 1 - 7?
 
 To answer this question I need two separate data frames with one having non Legendary/Mythical Pokemon and the other having only Legendary/Mythical Pokemon. For both data frames, I then need a count of the occurrence of every Pokemon type per generation. I'm interested in this question as I feel that it would be interesting to see if certain types have risen or fallen in popularity, or if the developers of Pokemon, Game Freak, have a bias towards certain types.
 
-**Approach:**
+## **Approach:**
 
-In order to answer this question, I will be using a bar chart to get a summation of types of the whole dataset, and connected line plots to count the non-Legendary/Mythical Pokemon and Legendary/Mythical Pokemon types across generations. The bar chart will allow us to easily see and compare how many times a particular type is counted in the whole data set. This will show how common or uncommon certain types are across the whole dataset. The connected line plot will serve a similar purpose, but it will allow us to compare by generation by setting the x axis as the generation, and the y axis as the number of times a type was counted in that generation. To make it easier to view the line plot, there will added interactivity that will highlight a line when it is hovered over.
+In order to answer this question, I will be using a bar chart to get a summation of types of the whole dataset, and connected line plots to count the non-Legendary/Mythical Pokemon and Legendary/Mythical Pokemon type counts across generations. The bar chart will allow us to easily see and compare how many times a particular type is counted in the whole data set. The connected line plot will serve a similar purpose, but it will allow us to compare by generation by setting the x axis as the generation, and the y axis as the number of times a type was counted in that generation. To make it easier to view the line plot, there will added interactivity that will highlight a line when it is hovered over by the mouse pointer.
 
-**Analysis:**
+## **Analysis:**
 
 ## 0 - Pre Process and Setup
 
@@ -69,6 +69,7 @@ knitr::opts_chunk$set(
   dpi = 300 # higher dpi, sharper image
 )
 
+#----------------------------------------------------------------------------------------#
 pokemon_data <- pokemon
 
 pokemon_data <- pokemon_data |>
@@ -121,12 +122,14 @@ pokemon_data <- pokemon_data |>
     
   )
 
+#Creating two different data frames for regular and legendary/mythical Pokemon
 special_pokemon <- pokemon_data |>
   filter(legend_stat == TRUE)
 
 regular_pokemon <- pokemon_data |>
   filter(legend_stat == FALSE)
 
+#Setting unique colors for future plots that mimic game's colors
 type_colors <-  
   c(
     "normal" = "gray50",
@@ -163,16 +166,21 @@ pokemon_data_longer <- pokemon_data |>
     cols = starts_with("type_"),
     values_to = "types"
   ) |>
-#Some Pokemon only have a single type, which causes NA values to show up when the data is pivoted
+#Some Pokemon only have a single type, which causes NA values to show up when the data is pivoted. These NA types need to be dropped.
   drop_na(types)
 
-pokemon_data_longer |> ggplot(aes(y =  fct_rev(fct_infreq(types)), fill = types)) +
-  geom_bar() +
+total_type_count  <- pokemon_data_longer |>
+  count(types) |>
+  rename("type_count" = "n")
+
+total_type_count |> ggplot(aes(x = type_count, y = fct_reorder(types, type_count), fill = types)) +
+  geom_col() +
 #Referenced: https://stackoverflow.com/questions/63653351/how-to-use-stat-count-to-label-a-bar-chart-with-counts-or-percentages-in-ggplo
   scale_fill_manual(values = type_colors) +
+  #Adding numerical count to end of bar chart
   geom_text(
-    aes(label = after_stat(count)),
-    stat = "count", hjust = 1.1, size = 3,
+    aes(label = type_count),
+    hjust = 1.1, size = 3,
     color = "white"
   ) +
   labs(
@@ -198,7 +206,7 @@ regular_pokemon_data_longer <- regular_pokemon |>
     cols = starts_with("type_"),
     values_to = "types"
   ) |>
-#Some Pokemon only have a single type, which causes NA values to show up when the data is pivoted. These NA types need to be dropped
+#Some Pokemon only have a single type, which causes NA values to show up when the data is pivoted. These NA types need to be dropped.
   drop_na(types)
 
 #Getting numerical value for every type per generation
@@ -206,6 +214,7 @@ regular_type_count  <- regular_pokemon_data_longer |>
   count(generation, types) |>
   rename("type_count" = "n")
 
+#This code is needed for geom_segment, this is basically extracting the segment ends from the data.
 regular_type_count <- regular_type_count |>
   arrange(types, generation) |>
   group_by(types) |>
@@ -215,8 +224,9 @@ regular_type_count <- regular_type_count |>
   ) |>
   ungroup()
 
-#-------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------#
 #Legendary/Mythical Pokemon
+#Same process as above but for the Legendary/Mythical Pokemon
 
 special_pokemon_data_longer <- special_pokemon |>
   pivot_longer(
@@ -238,8 +248,7 @@ special_type_count <- special_type_count |>
   ) |>
   ungroup()
 
-
-#-------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------#
 #Referenced: https://r-graph-gallery.com/412-customize-css-in-interactive-ggiraph.html
 #Referenced: https://ardata.fr/ggiraph-book/
 #Referenced: https://github.com/davidgohel/ggiraph/issues/298
@@ -266,7 +275,7 @@ plot1 <- regular_type_count |> ggplot(
     values = type_colors) +
   scale_x_continuous(breaks = regular_type_count$generation) +
   labs(
-    title = "Total Number of Type Occurrences by Generation\nfor non-Legendary/Mythical Pokemon",
+    title = "Number of Type Occurrences by Generation\nfor non-Legendary/Mythical Pokemon",
     subtitle = "Data up to Pokemon Sun & Moon (2016)",
     caption = "Data source: https://github.com/williamorim/pokemon/",
     x = "Generation",
@@ -278,10 +287,10 @@ plot1 <- regular_type_count |> ggplot(
     legend.title = element_text(size = 10),
   ) + 
   guides(
-     color = guide_legend(override.aes = list(size = 1), ncol = 2) 
+     color = guide_legend(ncol = 2) 
   )
 
-#-------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------#
 
 plot2 <- special_type_count |> ggplot(
   aes(x = generation, 
@@ -304,7 +313,7 @@ plot2 <- special_type_count |> ggplot(
     values = type_colors) +
   scale_x_continuous(breaks = special_type_count$generation) +
   labs(
-    title = "Total Number of Type Occurrences by Generation\nfor Legendary/Mythical Pokemon",
+    title = "Number of Type Occurrences by Generation\nfor Legendary/Mythical Pokemon",
     subtitle = "Data up to Pokemon Sun & Moon (2016)",
     caption = "Data source: https://github.com/williamorim/pokemon/",
     x = "Generation",
@@ -316,10 +325,10 @@ plot2 <- special_type_count |> ggplot(
     legend.title = element_text(size = 10),
   ) + 
   guides(
-     color = guide_legend(override.aes = list(size = 1), ncol = 2) 
+     color = guide_legend(ncol = 2) 
   )
 
-#-------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------#
 
 #This allows the graph to highlight the lines when hovered over along with hiding lines when clicking on the legend
 interactive_type_plot1 <- girafe(ggobj = plot1)
@@ -341,40 +350,41 @@ interactive_type_plot2 <- girafe_options(
   opts_toolbar(saveaspng = FALSE)
 )
 
+interactive_type_plot1 
+interactive_type_plot2 
 
-interactive_type_plot1
-interactive_type_plot2
 ```
 
-For better viewing, expand the line chart. Hovering over either a line or point highlights that specific line, and dims the other lines. Hovering over a line will display the specific type associated, and hovering over a point will display the count of times a type was seen in that specific generation.
+For better viewing, expand the line chart. Hovering over either a line or point highlights that specific line, and dims the other lines. Hovering over a line will display the specific type associated, and hovering over a point will display the count of times that type was seen in that specific generation.
 
-**Discussion:**
+## **Discussion:**
 
-From the initial bar chart it is obvious that out of the all the 18 types, Water is the most numerous from generations 1 through 7 with 131 total occurrences, followed by Normal with 109 occurrences, and Flying with 98 occurrences. On the opposite side, the Ice type only has a total of 34 occurrences, almost 100 less than Water, and follows Ghost types with 42 counts, and Dragon types with 44 counts. Generally speaking, the line chart for the non Legendary/Mythical Pokemon tends to follow the placements in the bar chart with Water, Normal and Flying types typically trending in the upper half of type counts per generation and Ice, Ghost, and Dragon being within the bottom 5. Another trend is Grass type counts superseding or matching Water type counts in generations 4 - 7 for the non Legendary/Mythical line chart. Another trend revealed by this chart is that less unique Pokemon are actually being developed every succesive generation.
+From the initial bar chart it is obvious that out of the all the 18 types, Water is the most numerous from generations 1 through 7 with `r total_type_count$type_count[18]` total occurrences, followed by Normal with `r total_type_count$type_count[13]` occurrences, and Flying with `r total_type_count$type_count[8]` occurrences. On the opposite side, the Ice type only has a total of `r total_type_count$type_count[12]` occurrences and follows Ghost types with `r total_type_count$type_count[9]` counts, and Dragon types with `r total_type_count$type_count[3]` counts. Generally speaking, the line chart for the non Legendary/Mythical Pokemon tends to follow the placements in the bar chart with Water, Normal and Flying types typically trending in the upper half of type counts per generation and Ice, Ghost, and Dragon being within the bottom 5. Another trend is Grass type counts superseding or matching Water type counts in generations 4 - 7 for the non Legendary/Mythical line chart. Finally, it's also clear that less unique Pokemon are actually being developed every successive generation.
 
-For the Legendary/Mythical Pokemon, the results for type counts per generation rarely follow the bar chart results. Psychic and Dragon type counts for Legendary/Mythical Pokemon actually supersede and trend to being more numerous than Water type counts across various generations, despite Water being the most numerous type and Psychic and Dragon types being less common. Ice on the other hand is still less numerous than every other type, with no Ice type Legendary/Mythical Pokemon introduced in generations 6-7. Fairy type Legendary/Mythical Pokemon superseded every other type in generations 6-7.
+For the Legendary/Mythical Pokemon, the results for type counts per generation rarely follow the bar chart results. Psychic and Dragon type counts for Legendary/Mythical Pokemon actually surpass and trend to being more numerous than Water type counts across various generations, despite Water being the most numerous type. Ice on the other hand is still less numerous than every other type, with no Ice type Legendary/Mythical Pokemon introduced in generations 6-7. Fairy type Legendary/Mythical Pokemon were more numerous than every other type in generations 6-7.
 
-I speculate that the data looks this way for a few reasons. It may be easier for the developers to design and come up with certain types such as Water or Normal as they can reference real animals more easily for them. The rarity of other type may also be intentional on the developer's part rather than happenstance. Dragon type Pokemon make up a large amount of the Legendary and Mythical Pokemon and they also tend to be quite powerful, so the developers may be limiting how many Dragon type Pokemon are developed on purpose. With less Pokemon being developed per generation, I suspect it's due to rising development costs with more time and energy being required to develop, model, and program a new Pokemon.
+I speculate that the data looks this way for a few reasons. It may be easier for the developers to design and come up with certain types such as Water or Normal as they can reference real animals more easily for them. The rarity of other types may also be intentional on the developer's part rather than happenstance. Dragon type Pokemon make up a large amount of the Legendary and Mythical Pokemon and they also tend to be quite powerful, so the developers may be limiting how many Dragon type Pokemon are developed on purpose. With less Pokemon being developed per generation, I suspect it's due to rising development costs with more time and energy being required to develop, model, and program a new Pokemon.
 
-## Question 2: Statistical and Physical Averages Across Generations
+# Question 2: Statistical and Physical Averages Across Generations
 
-**Introduction:**
+## **Introduction:**
 
-Another characteristic of Pokemon are their stats, weight, and height. A Pokemon's stats determines their strengths and weaknesses and how powerful they are. While the height of a Pokemon doesn't have any mechanical effect, the weight of a Pokemon can affect particular moves. The question I'd like to answer regarding these characteristics is: Have the average total stats and average physical characteristics of Pokemon risen, stayed the same, or fallen over the generations.
+Another characteristic of Pokemon are their stats, weight, and height. A Pokemon's stats determines their strengths and weaknesses and generally how powerful they are. While the height of a Pokemon doesn't have any mechanical effect, the weight of a Pokemon can affect particular moves. The question I'd like to answer regarding these characteristics is: Have the average total stats and average physical characteristics of Pokemon risen, stayed the same, or fallen over the generations?
 
-For this question, I need to create a new variable column called total_stats that is the summation of hp, attack, defense, special attack, special defense, and speed for every Pokemon along with their heights and weights. With these 3 stats, I can then get a mean of all 3 variables across the 7 generations by summarizing them, and then plot them per generation. I'm interested in this question as I want to see if there's a correlation with the physical stats to the actual stats of a Pokemon, or simply a change in how Pokemon are designed. For the stats such as HP and Attack, I want to see if newer Pokemon are slowly becoming more powerful than older generation Pokemon by having greater total stats.
+For this question, I need the heights and weights of every Pokemon, and also I need to create a new variable column called total_stats. Total_stats will be the summation of hp, attack, defense, special attack, special defense, and speed for every Pokemon. With these 3 stats, I can then get a mean of all 3 variables across the 7 generations by summarizing them, and then plot them per generation. I'm interested in this question as I want to see if there's a correlation with the physical characteristics to the actual stats of a Pokemon. For the total stats, I want to see if newer Pokemon are slowly becoming more powerful than older generation Pokemon by having greater total stats on average.
 
-**Approach:**
+## **Approach:**
 
 To answer this question, I will be using a connected line plot to plot the averages across the generations for the whole data set. This will allow us to compare averages across generations easily, and we will also be able to place a trend lines to view how the averages have changed over time. The x axis will be the generations, the y axis will be relevant average. All three plots will be combined using facet_wrap so that each average can be viewed by their own y scale.
 
-**Analysis:**
+## **Analysis:**
 
-## 2. Average Stats and Physical Averages Code
+## 3. Average Stats and Physical Averages Code
 
 ```{r}
 #| label: Stat Code
 
+#Grouping by generation and summarizing the mean of the total_stats, weights, and heights.
 generation_averages <- pokemon_data |>
   group_by(generation) |>
   summarise(avg_tot_stats = mean(total_stats),
@@ -393,7 +403,7 @@ generation_averages <- pokemon_data |>
       )
   )
 
-#-------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------#
 
 generation_averages |> ggplot(
   aes(
@@ -406,7 +416,7 @@ generation_averages |> ggplot(
   geom_smooth(method = "lm", se = FALSE) +
   scale_x_continuous(breaks = generation_averages$generation) +
     labs(
-    title = "Average Values by Generation",
+    title = "Average of Pokemon Total Stats, Weights, and Heights by Generation",
     subtitle = "Data up to Pokemon Sun & Moon (2016)",
     caption = "Data source: https://github.com/williamorim/pokemon/",
     x = "Generation",
@@ -427,14 +437,14 @@ generation_averages |> ggplot(
     nrow = 3
   )
 
-#-------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------#
 
 ```
 
-**Discussion:**
+## **Discussion:**
 
-From the graphs, it is clear that both average weights and average total stats have been trending upward ever since generation 1, peaking at generation 4. The averages of these two stats dropped in generation 5, but then they started trending upwards again in generation 6. Average heights peaked in generation 3, fell during generations 4 and 5, and then started trending upwards again after generation 5. Generally, average heights haven't had a consistent trend upwards like average total stats or average weights.
+From the graphs, it is clear that both average weights and average total stats have been trending upward ever since generation 1, and peaking at generation 4 at `r generation_averages$averages[10]` for total stats, and `r generation_averages$averages[12]` for weights. The averages of these two stats dropped in generation 5, but then they started trending upwards again in generation 6. Average heights peaked in generation 3, fell during generations 4 and 5, and then started trending upwards again after generation 5. Generally, average heights haven't had a consistent trend upwards like average total stats or average weights.
 
-From these results, there may be a correlation between total stats and weights. For example, a bigger Pokemon may have stronger attacks or defenses due to their size which is why Pokemon have gotten heavier. The reason for why the average total stats is rising, especially when comparing the first generations to the newer ones, might be for a variety of reasons. The game developers may be trying to create excitement for newer Pokemon, or the developers with more experience have found Pokemon with better stats to be more fun and exciting to play. I believe the reason average heights haven't changed much is due to the average non Legendary/Mythical Pokemon are not really designed to be imposing in the same way that a Legendary or Mythical Pokemon would be, so they are kept smaller.
+From these results, there may be a correlation between total stats and weights. For example, a bigger Pokemon may have stronger attacks or defenses due to their size which is why Pokemon have gotten heavier. The reason for why the average total stats is rising, especially when comparing the first generations to the newer ones, might be for a variety of reasons. The game developers may be trying to create excitement for newer Pokemon, or the developers with more experience have found Pokemon with better stats to be more fun and exciting to play with. I believe the reason average heights haven't changed much is due to the average non Legendary/Mythical Pokemon are not really designed to be imposing in the same way that a Legendary or Mythical Pokemon would be, so they are kept smaller.
 
-Regardless of the reasons for why these averages might be increasing, there is a clear trend toward newer generations of Pokemon on average being heavier, and having higher base stats when compared to older generations of Pokemon.
+Regardless of the reasons for why these averages might be increasing, there is a clear trend toward newer generations of Pokemon on average being heavier, and having higher total base stats when compared to older generations of Pokemon.

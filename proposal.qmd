@@ -33,21 +33,17 @@ pokemon_data <- pokemon
 
 The Pokemon dataset contains 22 columns of data and 949 rows containing data of Pokemon up to the 7th generation Pokemon games, which includes Pokemon Sun/Moon, Pokemon Ultra Sun/Moon, and Pokemon Let's Go Pikachu/Eevee.
 
-The columns contain information regarding several different statistics of Pokemon. This includes: Name, Species ID, Height, Weight, Base EXP, Type Info, HP, Attack, Defense, Special Attack, Speed, Colors, Egg Groups, and Generation ID.
+The columns contain information regarding several different statistics of Pokemon. This includes: Name, Species ID, Height, Weight, Base EXP, Type Info, HP, Attack, Defense, Special Attack, Speed, Colors, Egg Groups, and Generation ID. Each row is a unique Pokemon.
 
 For example, the Pokemon, Bulbasaur, has the following data:
 
-Type 1:
-`r pokemon_data$type_1[1]`
+Type 1: `r pokemon_data$type_1[1]`
 
-Type 2:
-`r pokemon_data$type_2[1]`
+Type 2: `r pokemon_data$type_2[1]`
 
-Attack:
-`r pokemon_data$attack[1]`
+Attack: `r pokemon_data$attack[1]`
 
-Defense:
-`r pokemon_data$defense[1]`
+Defense: `r pokemon_data$defense[1]`
 
 I chose this data set because I'm interested in Pokemon, and as a series that has existed since the 90's there is plenty of data to sift through that may reveal trends across different generations.
 
@@ -64,7 +60,7 @@ Have there been trends with the total stats, heights, and weights of Pokemon bet
 - Some Pokemon in the dataset have no associated generation ID due to being variants of existing Pokemon. These variants will be cleaned from the dataset as these are not distinct Pokemon. Alongside these some columns will be dropped as they are not needed for this analysis (colors, egg groups, urls). A data frame of Legendary and Mythical Pokemon will also need to be extracted from the original data to help answer question 1, alongside a summation of HP, Attack, Defense, Special Attack, and Speed.
 
 | Task Name | Status | Due | Priority | Summary |
-|---------------|---------------|---------------|---------------|---------------|
+|----|----|----|----|----|
 | Proposal | Complete | June 17th | High | Need to finalize details of the project proposal |
 | Final Deliverables | Incomplete | July 3rd | High | Final project items: Reproducibility, Presentation, Write-up |
 | Stat Graph | Complete | June 20th | High | All related work to Stat graph |

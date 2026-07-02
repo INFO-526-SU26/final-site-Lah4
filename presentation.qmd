@@ -1,15 +1,25 @@
 ---
-title: "Project title"
-subtitle: "INFO 526 - Summer 2024 - Final Project"
-author: "Author names"
+title: "Trends Across Pokemon Generations"
+subtitle: "INFO 526 - Summer 2026 - Final Project"
+author: "Luis Hernandez"
 title-slide-attributes:
-  data-background-image: images/watercolour_sys02_img34_teacup-ocean.jpg
-  data-background-size: stretch
+  data-background-image: images/wp8813120.jpg
+  data-background-size: cover
   data-background-opacity: "0.7"
   data-slide-number: none
 format:
   revealjs:
     theme:  ['data/customtheming.scss']
+    
+website:
+  navbar:
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "About"
+        href: about.qmd
+      - text: "Presentation"
+        href: presentation.qmd
   
 editor: visual
 execute:
@@ -20,9 +30,18 @@ execute:
 #| label: load-packages
 #| include: false
 
-# Load packages here
-pacman::p_load(tidymodels,
-               tidyverse)
+
+if (!require("pacman")) 
+  install.packages("pacman")
+
+# use this line for installing/loading
+pacman::p_load(tidyverse,
+               ggthemes,
+               patchwork,
+               ggiraph,
+               ggrepel,
+               pokemon)
+
 
 ```
 
@@ -30,136 +49,392 @@ pacman::p_load(tidymodels,
 #| label: setup
 #| include: false
 
-# Plot theme
-ggplot2::theme_set(ggplot2::theme_minimal(base_size = 11))
+# set theme for ggplot2
+ggplot2::theme_set(ggplot2::theme_grey(base_size = 12))
 
-# For better figure resolution
+# set figure parameters for knitr
 knitr::opts_chunk$set(
-  fig.retina = 3, 
-  dpi = 300, 
-  fig.width = 6, 
-  fig.asp = 0.618 
-  )
+  fig.width = 7, # 7" width
+  fig.asp = 0.618, # the golden ratio
+  fig.retina = 3, # dpi multiplier for displaying HTML output on retina
+  fig.align = "center", # center align figures
+  dpi = 300 # higher dpi, sharper image
+)
+
 ```
 
 ```{r}
 #| label: load-data
 #| include: false
-# Load data here
-data(mtcars)
-mtcars$speed <- mtcars$hp / mtcars$wt
+pokemon_data <- pokemon
 
-data("penguins")
+pokemon_data <- pokemon_data |>
+  rename(generation = generation_id)
+
+#Trimming specific columns that will not be needed for the analysis
+pokemon_data$id <- NULL
+pokemon_data$species_id <- NULL
+pokemon_data$base_experience <- NULL
+
+pokemon_data$egg_group_1 <- NULL
+pokemon_data$egg_group_2 <- NULL
+
+pokemon_data$color_1 <- NULL
+pokemon_data$color_2 <- NULL
+pokemon_data$color_f <- NULL
+
+pokemon_data$url_icon <- NULL
+pokemon_data$url_image <- NULL
+
+#Removing Pokemon without a generation ID
+#Referenced https://tidyr.tidyverse.org/reference/drop_na.html
+
+pokemon_data <- pokemon_data |>
+  drop_na(generation)
+
+#Referenced: https://infopoke.net/pokedex/legendary
+#Data does not include indicator for legendary/mythical status. 
+#This means I need to manually sort which Pokemon are legendary/mythical
+pokemon_data <- pokemon_data |>
+  mutate(
+    legend_stat = case_when(
+      row_number() %in% 
+        c(144, 145, 146, 150, 151, 243, 
+          244, 245, 249, 250, 251, 377, 
+          378, 379, 380, 381, 382, 383, 
+          384, 385, 386, 480, 481, 482, 
+          483, 484, 485, 486, 487, 488, 
+          489, 490, 491, 492, 493, 494, 
+          638, 639, 640, 641, 642, 643, 
+          644, 645, 646, 647, 648, 649, 
+          716, 717, 718, 719, 720, 721, 
+          785, 786, 787, 788, 791, 792, 
+          800, 801, 802 ) ~ TRUE,
+          TRUE  ~ FALSE
+    ),
+    
+    #getting a summation of the stats. This will be used in the 2nd question
+    total_stats = rowSums(across(c(hp, attack, defense, special_attack, special_defense, speed)))
+    
+  )
+
+#Creating two different data frames for regular and legendary/mythical Pokemon
+special_pokemon <- pokemon_data |>
+  filter(legend_stat == TRUE)
+
+regular_pokemon <- pokemon_data |>
+  filter(legend_stat == FALSE)
+
+#Setting unique colors for future plots that mimic game's colors
+type_colors <-  
+  c(
+    "normal" = "gray50",
+    "fighting" = "darkorange",
+    "flying" = "lightskyblue3",
+    "poison" = "mediumpurple",
+    "ground" = "sienna",
+    "rock" = "tan",
+    "bug" = "darkolivegreen3",
+    "ghost" = "purple4",
+    "steel" = "slategray",
+    "fire" = "red3",
+    "water" = "dodgerblue3",
+    "grass" = "seagreen4",
+    "electric" = "goldenrod",
+    "psychic" = "deeppink3",
+    "ice" = "cyan3",
+    "dragon" = "steelblue3",
+    "dark" = "grey30",
+    "fairy" = "plum3"
+  )
+
 ```
 
-# Using Quarto for presentations
 
-## Quarto
+## Motivation {background-color="lightsteelblue"}
 
--   The presentation is created using the Quarto CLI
 
--   `##` sets the start of a new slide
+- Pokemon is a game series that has spanned over 3 decades.
 
-## Layouts
+- With so many years under its belt, Pokemon has many creatures to observe and analyze.
 
-You can use plain text
+- Analyzing and visualizing Pokemon creatures may reveal trends that have arisen as the series has progressed.
 
-::: columns
-::: {.column width="40%"}
--   or bullet points[^1]
-:::
 
-::: {.column width="60%"}
-or in two columns
-:::
-:::
+## Data {background-color="lightsteelblue"}
 
-[^1]: And add footnotes
+- The data used is from the following: https://github.com/williamorim/pokemon/
 
--   like
+- The data set contains contains 22 columns of data and statistics for Pokemon. 
+  There are a total of 949 rows that represent unique Pokemon plus variants.
+  
+- Relevant columns include: Heights, Weights, Types, and stats such as HP and Defense
 
--   this
+- Other miscellaneous columns include: Colors, Egg Types, and Image URLs.
 
-## Code
 
-```{r, echo=FALSE}
-model <- lm(mpg ~ speed, data = mtcars) 
+## Questions {background-color="lightsteelblue"} 
 
-model |> tidy()
+- Question 1: How are the 18 types distributed for regular Pokemon and Legendary/Mythical Pokemon across Pokemon generations and are there any trends with the Type distribution?
 
-model |> glance()
+- Question 2: Have the average total stats and average physical characteristics of Pokemon changed across the Pokemon generations?
 
-```
 
-## Plots
+# Question 1 Graphs {background-color="lightsteelblue"} 
 
+## Non Legendary/Mythical Type Graph {background-color="lightsteelblue"} 
 ```{r}
-penguins |>
-  mutate(species = ifelse(species == "Adelie", "Adelie", "Other")) |>
-  ggplot(aes(x = flipper_length_mm, y = body_mass_g, color = species)) +
-  geom_point()
+#| label: Type Code 1
+#| fig-height: 3
+#| fig-width: 6
+
+#Need to account for secondary typing of Pokemon, so we're pivoting both type columns into one
+regular_pokemon_data_longer <- regular_pokemon |>
+  pivot_longer(
+    cols = starts_with("type_"),
+    values_to = "types"
+  ) |>
+#Some Pokemon only have a single type, which causes NA values to show up when the data is pivoted. These NA types need to be dropped.
+  drop_na(types)
+
+#Getting numerical value for every type per generation
+regular_type_count  <- regular_pokemon_data_longer |>
+  count(generation, types) |>
+  rename("type_count" = "n")
+
+#This code is needed for geom_segment, this is basically extracting the segment ends from the data.
+regular_type_count <- regular_type_count |>
+  arrange(types, generation) |>
+  group_by(types) |>
+  mutate(
+    generation_end = lead(generation),
+    count_end = lead(type_count)
+  ) |>
+  ungroup()
+
+#----------------------------------------------------------------------------------------#
+#Referenced: https://r-graph-gallery.com/412-customize-css-in-interactive-ggiraph.html
+#Referenced: https://ardata.fr/ggiraph-book/
+#Referenced: https://github.com/davidgohel/ggiraph/issues/298
+#Used to make the line graph interactive
+
+plot1 <- regular_type_count |> ggplot(
+  aes(x = generation, 
+      y = type_count,
+      xend = generation_end,
+      yend = count_end,
+      color = types,
+      group = types,
+      data_id = types
+      )
+  ) +
+  geom_point_interactive(
+    aes(tooltip = type_count), 
+    size = 1.5) +
+  geom_segment_interactive(
+    aes(tooltip = types), 
+    linewidth = 0.7, 
+    alpha = 0.5) +
+  scale_color_manual(
+    values = type_colors) +
+  scale_x_continuous(breaks = regular_type_count$generation) +
+  labs(
+    title = "Number of Type Occurrences by Generation\nfor non-Legendary/Mythical Pokemon",
+    subtitle = "Data up to Pokemon Sun & Moon (2016)",
+    caption = "Data source: https://github.com/williamorim/pokemon/",
+    x = "Generation",
+    y = "Type Count"
+  ) +
+  theme(
+    legend.position = "right",
+    legend.text = element_text(size = 9),
+    legend.title = element_text(size = 10),
+  ) + 
+  guides(
+     color = guide_legend(ncol = 2) 
+  )
+
+#----------------------------------------------------------------------------------------#
+
+#This allows the graph to highlight the lines when hovered over along with hiding lines when clicking on the legend
+interactive_type_plot1 <- girafe(ggobj = plot1)
+
+
+interactive_type_plot1 <- girafe_options(
+  interactive_type_plot1,
+  opts_hover(css = "stroke-width: 3px; transition: all 0.3s ease"),
+  opts_hover_key(css = "stroke-width: 3px; transition: all 0.3s ease;"),
+  opts_hover_inv("opacity:0.25;filter:saturate(10%);"),
+  opts_toolbar(saveaspng = FALSE)
+)
+
+
+interactive_type_plot1 
+
 ```
-
-## Plot and text
-
-::: columns
-::: {.column width="50%"}
--   Some text
-
--   goes here
-:::
-
-::: {.column width="50%"}
-```{r, warning=FALSE, fig.width=5.5}
-penguins |>
-  ggplot(aes(x = bill_length_mm, y = species, color = species)) +
-  geom_boxplot(linewidth = 0.75,
-               outlier.size = 2.5) +
-  theme_minimal(base_size = 15) +
-  theme(legend.key.size = unit(0.8, "cm"))
-```
-:::
-:::
-
-# A new section...
-
-## Tables
-
-If you want to generate a table, make sure it is in the HTML format (instead of Markdown or other formats), e.g.,
-
+## Legendary/Mythical Type Graph {background-color="lightsteelblue"} 
 ```{r}
-penguins |> 
-  head() |>
-  kableExtra::kable() |>
-  kableExtra::kable_styling()
+#| label: Type Code 2
+#| fig-height: 3
+#| fig-width: 6
+
+
+#Legendary/Mythical Pokemon
+#Same process as above but for the Legendary/Mythical Pokemon
+
+special_pokemon_data_longer <- special_pokemon |>
+  pivot_longer(
+    cols = starts_with("type_"),
+    values_to = "types",
+  ) |>
+  drop_na(types)
+
+special_type_count  <- special_pokemon_data_longer |>
+  count(generation, types) |>
+  rename("type_count" = "n")
+
+special_type_count <- special_type_count |>
+  arrange(types, generation) |>
+  group_by(types) |>
+  mutate(
+    generation_end = lead(generation),
+    count_end = lead(type_count)
+  ) |>
+  ungroup()
+
+#----------------------------------------------------------------------------------------#
+#Referenced: https://r-graph-gallery.com/412-customize-css-in-interactive-ggiraph.html
+#Referenced: https://ardata.fr/ggiraph-book/
+#Referenced: https://github.com/davidgohel/ggiraph/issues/298
+#Used to make the line graph interactive
+
+plot2 <- special_type_count |> ggplot(
+  aes(x = generation, 
+      y = type_count,
+      xend = generation_end,
+      yend = count_end,
+      color = types,
+      group = types,
+      data_id = types
+      )
+  ) +
+  geom_point_interactive(
+    aes(tooltip = type_count), 
+    size = 1.5) +
+  geom_segment_interactive(
+    aes(tooltip = types), 
+    linewidth = 0.7, 
+    alpha = 0.5) +
+  scale_color_manual(
+    values = type_colors) +
+  scale_x_continuous(breaks = special_type_count$generation) +
+  labs(
+    title = "Number of Type Occurrences by Generation\nfor Legendary/Mythical Pokemon",
+    subtitle = "Data up to Pokemon Sun & Moon (2016)",
+    caption = "Data source: https://github.com/williamorim/pokemon/",
+    x = "Generation",
+    y = "Type Count"
+  ) +
+  theme(
+    legend.position = "right",
+    legend.text = element_text(size = 9),
+    legend.title = element_text(size = 10),
+  ) + 
+  guides(
+     color = guide_legend(ncol = 2) 
+  )
+
+#----------------------------------------------------------------------------------------#
+
+#This allows the graph to highlight the lines when hovered over along with hiding lines when clicking on the legend
+
+interactive_type_plot2 <- girafe(ggobj = plot2)
+
+
+interactive_type_plot2 <- girafe_options(
+  interactive_type_plot2,
+  opts_hover(css = "stroke-width: 3px; transition: all 0.3s ease"),
+  opts_hover_key(css = "stroke-width: 3px; transition: all 0.3s ease;"),
+  opts_hover_inv("opacity:0.25;filter:saturate(10%);"),
+  opts_toolbar(saveaspng = FALSE)
+)
+
+
+interactive_type_plot2 
+
 ```
 
-## Images
+# Question 2 Graph {background-color="lightsteelblue"}
 
-![Image credit: Danielle Navarro, Percolate.](images/watercolour_sys02_img34_teacup-ocean.png){fig-align="center" width="500"}
+## Total Stat and Physical Averages Over Generations {background-color="lightsteelblue"}
+```{r}
+#| label: Stat Code
+#| fig-height: 4
+#| fig-width: 8
 
-## Math Expressions {.smaller}
+#Grouping by generation and summarizing the mean of the total_stats, weights, and heights.
+generation_averages <- pokemon_data |>
+  group_by(generation) |>
+  summarise(avg_tot_stats = mean(total_stats),
+            avg_height = mean(height),
+            avg_weight = mean(weight)
+            ) |>
+  pivot_longer(
+    cols = starts_with("avg_"),
+    values_to = "averages"
+  ) |>
+  mutate(
+    name = recode(factor(name),
+      "avg_tot_stats" = "Total Stats",
+      "avg_height" = "Height (M)",
+      "avg_weight" = "Weight (Kg)"
+      )
+  )
 
-You can write LaTeX math expressions inside a pair of dollar signs, e.g. \$\\alpha+\\beta\$ renders $\alpha + \beta$. You can use the display style with double dollar signs:
+#----------------------------------------------------------------------------------------#
 
-```         
-$$\bar{X}=\frac{1}{n}\sum_{i=1}^nX_i$$
+generation_averages |> ggplot(
+  aes(
+    x = generation,
+    y = averages,
+    )
+  ) +
+  geom_point(size = 1, alpha = 0.75) +
+  geom_line() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = generation_averages$generation) +
+    labs(
+    title = "Average of Pokemon Total Stats, Weights, and Heights by Generation",
+    subtitle = "Data up to Pokemon Sun & Moon (2016)",
+    caption = "Data source: https://github.com/williamorim/pokemon/",
+    x = "Generation",
+    y = "Average Value"
+  ) +
+  geom_label_repel(
+    aes(label = sprintf("%.2f", averages)),
+    size = 3,
+    color = "black") +
+  theme(
+    legend.text = element_text(size = 9),
+    legend.title = element_text(size = 10),
+  ) +
+  #Referenced: https://ggplot2.tidyverse.org/reference/facet_wrap.html
+  facet_wrap(
+    ~ fct_inorder(name),
+    scales = "free_y",
+    nrow = 3
+  )
+
+#----------------------------------------------------------------------------------------#
+
 ```
 
-$$
-\bar{X}=\frac{1}{n}\sum_{i=1}^nX_i
-$$
+## Conclusions {background-color="lightsteelblue"}
 
-Limitations:
+- Water is the most numerous type and tend to be in the upper half if type counts per generation along Normal and Flying. Ice, Ghost, and Dragon are the least common types. 
+- Grass Type Pokemon have been more numerous than Water types in generations 4 - 6 and equal in generation 7
+- Among the Legendary and Mythical Pokemon, Dragon and Psychic types were the most numerous with Water types being uncommon. Ice Types were still the least common.
+- Fewer Unique Pokemon are being developed per generation overall.
+- The average total stats and weights of Pokemon have been steadily rising since generation 1.
+- Heights hit their lowest average in generation 6, but then hit their highest average in generation 7.
 
-1.  The source code of a LaTeX math expression must be in one line, unless it is inside a pair of double dollar signs, in which case the starting `$$` must appear in the very beginning of a line, followed immediately by a non-space character, and the ending `$$` must be at the end of a line, led by a non-space character;
-
-2.  There should not be spaces after the opening `$` or before the closing `$`.
-
-# Wrap up
-
-## Feeling adventurous?
-
--   You are welcomed to use the default styling of the slides. In fact, that's what I expect majority of you will do. You will differentiate yourself with the content of your presentation.
-
--   But some of you might want to play around with slide styling. Some solutions for this can be found at https://quarto.org/docs/presentations/revealjs.
